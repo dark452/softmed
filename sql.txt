@@ -1,0 +1,45 @@
+CREATE TABLE IF NOT EXISTS "persona" 
+(
+rut INTEGER PRIMARY KEY not null,
+
+dv VARCHAR(1) not null,
+nombres VARCHAR(255) not null,
+
+apellido_paterno VARCHAR(255) not null,
+
+apellido_materno VARCHAR(255) not null,
+
+fecha_nacimiento DATE not null,
+direccion_calle VARCHAR(255) not null,
+direccion_num INTEGER not null,
+direccion_detalle TEXT,
+mail VARCHAR(255) not null,
+telefono INTEGER,
+actividad VARCHAR(255),
+foto BLOB,
+telefono_trabajo INTEGER, 
+comentario TEXT,
+genero VARCHAR(100) not null);
+
+
+
+
+CREATE TABLE IF NOT EXISTS "usuario"
+(rut INTEGER PRIMARY KEY not null,
+clave VARCHAR(100) not null,
+perfil INTEGER not null,
+FOREIGN KEY(rut) REFERENCES persona(rut)
+);
+
+CREATE TABLE IF NOT EXISTS isapre (
+id_isapre INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL
+, nombre_isapre VARCHAR(255), convenio BOOLEAN);
+
+CREATE TABLE IF NOT EXISTS "paciente"
+(rut INTEGER PRIMARY KEY not null,
+id_isapre INTEGER not null,
+perfil INTEGER not null,
+FOREIGN KEY(rut) REFERENCES persona(rut),
+FOREIGN KEY(id_isapre) REFERENCES isapre(id_isapre)
+);
+

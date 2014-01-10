@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:WindowedApplication xmlns:mx="http://www.adobe.com/2006/mxml"
+						layout="absolute" title="My Splash Screen" cornerRadius="0"
+						showFlexChrome="false" height="280" width="500"
+						applicationComplete="init();">
+	<mx:Form x="9" y="10" width="474" height="259">
+		<mx:FormItem label="Rut" required="true">
+			<mx:VBox width="109" height="100%">
+			</mx:VBox>
+		</mx:FormItem>
+		<mx:FormItem label="Nombres">
+			<mx:VBox width="109" height="100%">
+			</mx:VBox>
+		</mx:FormItem>
+		<mx:FormItem label="Apellido Paterno">
+			<mx:VBox width="109" height="100%">
+			</mx:VBox>
+		</mx:FormItem>
+		<mx:FormItem label="Apellido Materno">
+			<mx:VBox width="109" height="100%">
+			</mx:VBox>
+		</mx:FormItem>
+		<mx:FormItem label="Fecha Nacimiento">
+			<mx:VBox width="109" height="100%">
+			</mx:VBox>
+		</mx:FormItem>
+		<mx:FormItem label="Dirección Calle">
+			<mx:VBox width="109" height="100%">
+			</mx:VBox>
+		</mx:FormItem>
+		<mx:FormItem label="Dirección Número">
+			<mx:VBox width="109" height="100%">
+			</mx:VBox>
+		</mx:FormItem>
+		<mx:FormItem label="Dirección Detalle">
+			<mx:VBox width="109" height="100%">
+			</mx:VBox>
+		</mx:FormItem>
+		<mx:FormItem label="Label">
+			<mx:TextInput/>
+		</mx:FormItem>
+	</mx:Form>
+</mx:WindowedApplication>

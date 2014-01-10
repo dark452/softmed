@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
+					   xmlns:mx="library://ns.adobe.com/flex/mx"
+					   width="1000"
+					   height="700"
+					   title="SOFTMED Sistemas Medicos Avanzados"
+						resize="false"
+					   applicationComplete="startServer(event)"
+					
+					   >
+	
+	
+	<!--fx:Style source="SOFTMED.css"/-->
+	<fx:Style> 
+		@namespace s "library://ns.adobe.com/flex/spark"; 
+		s|WindowedApplication 
+		{ 
+			background-color:#999999; 
+			background-alpha:"1"; 
+			
+			font-color:#cccccc;
+			
+			
+		}          
+	</fx:Style>
+	<fx:Style source="SOFTMED.css"/>
+	
+	
+	
+	
+	
+	<fx:Script>
+		<![CDATA[
+	
+	//////////////////////		
+			
+			import Paciente;
+			
+			import air.net.URLMonitor;
+			
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.collections.ArrayCollection;
+		
+			
+			var _urlForRequest:URLRequest =new	URLRequest("http://www.google.cl");	//URL donde se comprobará si hay internet
+			var _monitor:URLMonitor =  new URLMonitor(_urlForRequest);				//instancia de monitor de internet
+			public var listaSexo:ArrayCollection		=new ArrayCollection;
+			public var listaPrevision:ArrayCollection	=new ArrayCollection;
+			
+			
+			//////////// BASE DE DATOS
+			private var bd1:Bd = new Bd();
+
+			import com.adobe.air.crypto.EncryptionKeyGenerator;			//manipular Contraseña de BD
+			
+			private var createStmt:SQLStatement = new SQLStatement();
+	
+			//////////// CONEXION
+			private var serverSocket:ServerSocket = new ServerSocket();	//conexion como servidor
+			private var clientSocket:Socket;							//conexion a cliente
+			private var localIP:String = "0.0.0.0";						//direccion de escucha (o sea cualquiera)
+			private var localPort:int = 8214; //Port that our service is running on (should be same as client's)
+			private var serverName:String = "Medico";			//nombre del servidor
+			
+			[Bindable]   public   var _var   :Variables    = Variables.getInstance();
+			
+			protected function startServer(event:FlexEvent):void
+			{
+				this.main();
+				
+				/////////////////////////////////////////////////////////////
+				//CREA O ABRE BASE DE DATOS
+		
+				if(bd1.existeArchivo()){
+					
+					instructions.text="Ingrese su contraseña";
+				}else{Alert.show("BD NO EXISTE", "false", mx.controls.Alert.OK);}
+				
+				
+				////////////////////////////////////////////////////////////
+				
+				serverSocket.bind(localPort, localIP);
+				
+				serverSocket.addEventListener(ServerSocketConnectEvent.CONNECT, onConnect);
+				serverSocket.listen();
+				
+				////////////////////////////////////////////////////////////
+				listaSexo.addItem("Masculino");
+				listaSexo.addItem("Femenino");
+				
+				listaPrevision.addItem("Banmedica");
+				listaPrevision.addItem("Colmena");
+				listaPrevision.addItem("Consalud");
+				listaPrevision.addItem("Cruz blanca");
+				listaPrevision.addItem("Ferrosalud");
+				listaPrevision.addItem("Masvida");
+				listaPrevision.addItem("Vida Tres");
+				listaPrevision.addItem("Particular");
+				listaPrevision.addItem("Fonasa");
+			}
+		//////////////////////////////////////////
+			public function main():void
+			{
+				this.contenedorTab.visible=false;
+				this.listaPacientes.visible=false;
+				this.contenedorTab.y=-700;
+				_monitor.addEventListener(StatusEvent.STATUS, onStatusChange);
+				_monitor.pollInterval = 5; //en milisegundos, 15 segundos.
+				_monitor.start();
+				
+				_var.listaPacientes 		= listaPacientes;
+				_var.campoRut				= campoRut;
+				_var.campoNombres   		= campoNombres;
+				_var.campoApellidoPaterno   = campoApellidoPaterno;
+				_var.campoApellidoMaterno   = campoApellidoMaterno;
+				_var.campoFechaNacimiento   = campoFechaNacimiento;
+				_var.campoSexo				= campoSexo;
+				
+				_var.campoPrevision      	= campoPrevision;
+				
+				_var.labelTamanoBD			= labelTamanoBD;
+				_var.labelId						= labelId;
+				bd1               = new Bd();
+				
+			}
+			
+	///////////////////////////////////////// CONTROL DE CAMPOS
+			private function seleccionarPaciente():void
+			{
+				this.contenedorTab.visible=true;
+				
+				this.labelId.text			= listaPacientes.selectedItem.id;
+				this.campoRut.text         = listaPacientes.selectedItem.rut;
+				this.campoNombres.text         = listaPacientes.selectedItem.nombres;
+				this.campoApellidoPaterno.text      = listaPacientes.selectedItem.apellidoPaterno;
+				this.campoApellidoMaterno.text         = listaPacientes.selectedItem.apellidoMaterno;
+				this.campoFechaNacimiento.text         = listaPacientes.selectedItem.fechaNacimiento;
+				this.campoSexo.textInput.text         = listaPacientes.selectedItem.sexo;
+				this.campoPrevision.textInput.text         = listaPacientes.selectedItem.prevision;
+				
+				if (listaPacientes.selectedItem.sexo == "Masculino")campoSexo.selectedIndex = 0;
+				if (listaPacientes.selectedItem.sexo == "Femenino")campoSexo.selectedIndex = 1;
+				
+				if (listaPacientes.selectedItem.prevision == "Banmedica")campoSexo.selectedIndex = 0;
+				if (listaPacientes.selectedItem.prevision == "Colmena")campoSexo.selectedIndex = 1;
+				if (listaPacientes.selectedItem.prevision == "Consalud")campoSexo.selectedIndex = 2;
+				if (listaPacientes.selectedItem.prevision == "Cruz Blanca")campoSexo.selectedIndex = 3;
+				if (listaPacientes.selectedItem.prevision == "Ferrosalud")campoSexo.selectedIndex = 4;
+				if (listaPacientes.selectedItem.prevision == "Masvida")campoSexo.selectedIndex = 5;
+				if (listaPacientes.selectedItem.prevision == "Vida Tres")campoSexo.selectedIndex = 6;
+				if (listaPacientes.selectedItem.prevision == "Particular")campoSexo.selectedIndex = 7;
+				if (listaPacientes.selectedItem.prevision == "Fonasa")campoSexo.selectedIndex = 8;
+
+				
+				
+			}
+			
+			
+			private function seleccionarPaciente_():void
+			{
+				this.contenedorTab.visible=true;
+				_var.id			= listaPacientes.selectedItem.id;
+				_var.rut         = listaPacientes.selectedItem.rut;
+				_var.nombres         = listaPacientes.selectedItem.nombres;
+				_var.apellidoPaterno      = listaPacientes.selectedItem.apellidoPaterno;
+				_var.apellidoMaterno         = listaPacientes.selectedItem.apellidoMaterno;
+				_var.fechaNacimiento         = listaPacientes.selectedItem.fechaNacimiento;
+				_var.sexo         = listaPacientes.selectedItem.sexo;
+				_var.prevision         = listaPacientes.selectedItem.prevision;
+				
+				
+				
+			}
+			
+			
+			
+			
+			
+	///////////////////////////////////////////////////////////
+	
+			private function openConnection():void{
+				var password:String = passwordInput.text;
+				var mensaje:String =bd1.validaPassword(password);
+				if(mensaje!=""){
+					statusMsg.text=mensaje;
+					return;
+				}
+				passwordInput.text = "";
+				bd1.openConnection2(password);
+				_var.conn.addEventListener(SQLEvent.OPEN, openHandler);
+			}
+			
+			private function openHandler(event:SQLEvent):void
+			{
+				this.passwordInput.visible=false;
+				this.openButton.visible=false;
+				this.statusMsg.visible=false;
+				this.instructions.visible=false;
+				this.contenedorTab.visible=true;
+				this.titulo.visible=false;
+				this.bajarTabH.play();
+				this.listaPacientes.visible=true;
+			}
+			
+	/////////////////////////////////////
+			
+			protected function createbind(event:MouseEvent):void
+			{
+				if (serverSocket.bound)
+				{
+					serverSocket.close();
+					serverSocket = new ServerSocket();
+				}
+				
+				try
+				{
+					serverSocket.bind(localPort, localIP);
+				}
+				catch(e:IOError)
+				{
+					trace("Socket issues");
+				}
+				serverSocket.addEventListener(ServerSocketConnectEvent.CONNECT, onConnect);
+				serverSocket.listen();
+				
+				logField.text += ("Esperando conexiones en el puerto " + serverSocket.localAddress + ":" + serverSocket.localPort + "\n");
+				
+			}
+			
+			private function onConnect(e:ServerSocketConnectEvent):void
+			{
+				clientSocket = e.socket;
+				clientSocket.addEventListener(ProgressEvent.SOCKET_DATA, onClientSocketData);
+				
+				//Log connection on our side
+				logField.text += ("Equipo secundario " + clientSocket.remoteAddress + ":" + localPort + " conectado\n");
+			}
+			
+			private function onClientSocketData(e:ProgressEvent):void
+			{
+				var buffer:ByteArray = new ByteArray();
+				clientSocket.readBytes(buffer, 0, clientSocket.bytesAvailable);
+				if (buffer.toString() == "req_name")
+					sendName();
+				if (buffer.toString() != "req_name")
+					sendData();
+				logField.text += ("Received: " + buffer.toString() + "\n");
+			}
+			
+			private function sendName():void
+			{
+				//Send our client friendly name
+				logField.text += ("ENVIANDO: serverName \n");
+				clientSocket.writeUTFBytes(serverName);
+				clientSocket.flush();
+			}
+			
+			private function sendData():void
+			{
+				//Send our client friendly name
+				
+				logField.text += ("ENVIANDO: POPITO \n");
+				clientSocket.writeUTFBytes("POPITO");
+				clientSocket.flush();
+			}
+			
+	/////////////////////////////////////////
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+	
+				
+			}
+			
+			
+			
+			
+			
+			function onStatusChange(e:StatusEvent):void
+			{
+				if(_monitor.available == true)
+				{
+					//loquesea
+					popo.text="HAY INTERNET, respaldando a traves del metodo push al sistema Supreme Cloud.";
+				}
+				else
+				{
+					//loquesea
+					popo.text="NO HAY INTERNET!, respaldando en sistema de almacenamiento local de emergencia.";
+				}
+			}
+			
+			/////////////////////////// Manejadores de botones
+			
+			function btnBuscar_clickHandler(e:Event):void{
+				this.contenedorTab.visible=false;
+			}
+			
+			function btnAgregar_clickHandler(e:Event):void{
+				bd1.agregaPaciente(this.campoRut.text, this.campoNombres.text, this.campoApellidoPaterno.text, this.campoApellidoMaterno.text, this.campoFechaNacimiento.text,
+									this.campoSexo.selectedItem, this.campoPrevision.selectedItem);
+			}
+			
+			function btnBorrar_clickHandler(e:Event):void{
+				bd1.borraPaciente(this.labelId.text);
+			}
+			
+			function btnActualizar_clickHandler(e:Event):void{
+				bd1.actualizaPaciente(this.labelId.text, this.campoRut.text, this.campoNombres.text, this.campoApellidoPaterno.text, this.campoApellidoMaterno.text,
+									this.campoFechaNacimiento.text, this.campoSexo.selectedItem, this.campoPrevision.selectedItem);
+			}
+			
+			
+			/////////////////////////////////////////////////////
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<mx:Glow id="glowImage" duration="500"
+				 alphaFrom="1.0" alphaTo="0.3"
+				 blurXFrom="0.0" blurXTo="20.0"
+				 blurYFrom="0.0" blurYTo="20.0"
+				 color="0xFFFFFF"/>
+		<mx:Glow id="unglowImage" duration="500"
+				 alphaFrom="0.3" alphaTo="1.0"
+				 blurXFrom="20.0" blurXTo="0.0"
+				 blurYFrom="20.0" blurYTo="0.0"
+				 color="0x0000FF"/>
+		<mx:Fade id="fadeOut" duration="200" alphaFrom="1.0" alphaTo="0.0"/>
+		<mx:Fade id="fadeIn" duration="200" alphaFrom="0.0" alphaTo="1.0"/>
+		<mx:Resize id="expandirTab" target="{contenedorTab}" widthTo="1000"/>
+		<mx:Resize id="expandirTabH" target="{contenedorTab}" heightTo="600"/>
+		<mx:Resize id="contraerTab" target="{contenedorTab}" widthTo="1"/>
+		<!--mx:Resize id="expandirLista" target="{listaPacientes}" widthTo="900"/-->
+		<!--mx:Resize id="expandirLista" target="{listaPacientes}" widthTo="400"/-->
+		<!--mx:Resize id="contraerLista" target="{listaPacientes}" widthTo="1"/-->
+		<mx:Move id="bajarTabH" target="{contenedorTab}" yTo="0"/>
+		<mx:Move id="myMove" target="{contenedorTab}" xTo="999"/>
+		<mx:Move id="myMove2" target="{contenedorTab}" xTo="0"/>
+		
+		<mx:Blur id="blurImage" target="{contenedorTab}" duration="500" 
+				 blurXFrom="0.0" blurXTo="3.0" 
+				 blurYFrom="0.0" blurYTo="3.0"/>
+		<mx:Blur id="unblurImage" target="{contenedorTab}" duration="500" 
+				 blurXFrom="3.0" blurXTo="0.0" 
+				 blurYFrom="3.0" blurYTo="0.0"/>
+	</fx:Declarations>
+	
+	<s:BorderContainer width="100%" height="100%"
+					   backgroundImage="@Embed('imagenes/bg2.jpg')"
+					   backgroundImageFillMode="repeat" >
+	</s:BorderContainer>			
+	<mx:DataGrid width="1000" height="690" id="listaPacientes" left="1" top="1" dataProvider="{_var.datosDB}" click="{seleccionarPaciente()}">
+	<!--mx:DataGrid width="1000" alpha="0.5" height="690" id="listaPacientes" left="1" top="1" dataProvider="{_var.datosDB}" click="{seleccionarPaciente(), expandirTab.play(), myMove2.play(), unblurImage.play()}"-->
+		<mx:columns>
+			<mx:DataGridColumn dataField="id" headerText="ID"/>
+			<mx:DataGridColumn dataField="rut" headerText="RUT"/>
+			<mx:DataGridColumn dataField="nombres" headerText="Nombre"/>
+			<mx:DataGridColumn dataField="apellidoPaterno" headerText="A.Paterno"/>
+			<mx:DataGridColumn dataField="apellidoMaterno" headerText="A.Materno"/>
+			<mx:DataGridColumn dataField="fechaNacimiento" headerText="Fecha Nac."/>
+			<mx:DataGridColumn dataField="sexo" headerText="Sexo"/>
+			<mx:DataGridColumn dataField="prevision" headerText="Previsión"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:TabNavigator id="contenedorTab" visible="true" x="0" y="0" width="1000" height="700"
+					  fontFamily="Verdana" fontSize="10">
+		<s:NavigatorContent id="pacientes" width="100%" height="100%" label="PACIENTES"  fontFamily="Verdana" fontSize="10" visible="{pacientes.focusEnabled}" hideEffect="{fadeOut}" showEffect="{fadeIn}">
+			
+			<!--s:Button id="btnSend" x="792" y="14" width="179" height="22" label="Mostrar todos" click="{btnBuscar_clickHandler(event),  contraerTab.play(), myMove.play()}"/-->
+			<s:Button id="btnSend" x="792" y="14" width="179" height="22" label="Mostrar todos" click="{btnBuscar_clickHandler(event)}"/>
+			
+			<s:Label id="labelId" x="26" y="22" text="{_var.id}" />
+			<s:Label x="26" y="22" text="RUT"/>
+			<mx:TextInput id="campoRut" x="23" y="36" width="214" text="{_var.rut}"/>
+			
+			<s:Label x="26" y="77" text="Nombres"/>
+			<mx:TextInput id="campoNombres" x="23" y="95" width="214" text="{_var.nombres}"/>
+			
+			<s:Label x="26" y="141" text="Fecha de Nacimiento"/>
+			<mx:DateField x="23" y="159" id="campoFechaNacimiento" width="135" text="{_var.fechaNacimiento}"/>
+						
+			<s:Label x="278" y="77" text="Apellido Paterno"/>
+			<mx:TextInput id="campoApellidoPaterno" x="275" y="95" width="214" text="{_var.apellidoPaterno}"/>
+			
+			<s:Label x="533" y="76" text="Apellido Materno"/>
+			<mx:TextInput id="campoApellidoMaterno" x="533" y="94" width="214" text="{_var.apellidoMaterno}"/>
+			
+			<s:Label x="275" y="141" text="Sexo"/>
+			<s:ComboBox x="275" id="campoSexo" y="158" dataProvider="{listaSexo}" />
+			
+			<s:Label x="533" y="140" text="Previsión"/>
+			<s:ComboBox x="533" y="158" id="campoPrevision" width="214" dataProvider="{listaPrevision}"/>
+			<s:Button id="agregar" x="791" y="52" width="179" height="25" label="Agregar como nuevo" click="{btnAgregar_clickHandler(event)}"/>
+			<s:Button id="borrar" x="791" y="158" width="179" height="23" label="Borrar" click="{btnBorrar_clickHandler(event)}"/>
+			<s:Button x="791" y="94" width="179" label="Guardar cambios"  click="{btnActualizar_clickHandler(event)}"/>
+			
+		
+			
+			
+		</s:NavigatorContent>
+		<s:NavigatorContent width="100%" height="100%" label="BASE DE DATOS">
+			<s:Label x="64" y="62" text="Tamaño de la base de datos:"/>
+			<s:Label id="labelTamanoBD" x="262" y="62" text="{_var.tamanoBD}"/>
+			
+		</s:NavigatorContent>
+	
+			
+		<s:NavigatorContent id="conexion" width="100%" height="100%" label="CONEXION"  color="#0B333C" fontFamily="Verdana" fontSize="10"  visible="{conexion.focusEnabled}"
+								hideEffect="{fadeOut}" showEffect="{fadeIn}">
+				<s:TextArea id="logField" x="423" y="54" width="290" height="258" editable="false"
+							fontSize="12"/>
+				<s:Label x="423" y="36" text="Mensajes del sistema"/>
+				<s:Button id="bind" x="30" y="25" width="302" label="Esperar conexión de equipo secundario" click="createbind(event)"/>
+				<s:Label id="popo" x="30" y="78" text="Conectado a internet"/>
+			</s:NavigatorContent>
+		</mx:TabNavigator>
+	<mx:Text id="titulo" x="1" y="200" width="100%" height="65"
+			 text="SOFTMED 2013 | Sistemas Médicos Avanzados"
+			 textAlign="center" color="#ff0000" fontSize="16"/>
+	<mx:Text id="instructions" x="1" y="241" width="100%" height="65"
+			 text="Ingrese una contraseña nueva. La próxima vez que inicie la aplicación, esta contraseña será requerida para comenzar a trabajar."
+			 textAlign="center" color="#444444"/>
+
+	<mx:Text id="statusMsg" x="1" y="359" width="1000" height="43" color="#990000" textAlign="center"/>
+	<mx:Button id="openButton" x="420" y="314" width="160" label="Ingresar" click="openConnection();"/>
+	<mx:TextInput id="passwordInput" x="420" y="284" displayAsPassword="true"/>
+	
+	
+	
+	
+</s:WindowedApplication>

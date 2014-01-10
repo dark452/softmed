@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
+					   xmlns:mx="library://ns.adobe.com/flex/mx"
+					   xmlns:assql="com.maclema.mysql.mxml.*"
+					   width="1000"
+					   height="700"
+					   title="SOFTMED Sistemas Medicos Avanzados"
+					   resize="false"
+					   applicationComplete="startServer(event)"
+					
+					   >
+	
+	
+	<!--fx:Style source="SOFTMED.css"/-->
+	<fx:Style> 
+		@namespace s "library://ns.adobe.com/flex/spark"; 
+		s|WindowedApplication 
+		{ 
+			background-color:#999999; 
+			background-alpha:"1"; 
+			
+			font-color:#cccccc;
+			
+			
+		}          
+	</fx:Style>
+	<fx:Style source="SOFTMED.css"/>
+	
+	
+	
+	
+	
+	<fx:Script>
+		<![CDATA[
+	
+	//////////////////////		
+			
+			
+			
+			
+			
+			////////////////////////////////
+			import Paciente;
+						
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.collections.ArrayCollection;
+		
+			public var listaSexo:ArrayCollection		=new ArrayCollection;
+			public var listaPrevision:ArrayCollection	=new ArrayCollection;
+			
+			
+			//////////// BASE DE DATOS
+			private var bd1:Bd = new Bd();
+
+			
+			private var createStmt:SQLStatement = new SQLStatement();
+	
+			[Bindable]   public   var _var   :Variables    = Variables.getInstance();
+			
+			protected function startServer(event:FlexEvent):void
+			{
+				this.main();
+				
+				/////////////////////////////////////////////////////////////
+				//CREA O ABRE BASE DE DATOS
+		
+				if(bd1.existeArchivo()){
+					
+
+				}else{Alert.show("BD NO EXISTE", "false", mx.controls.Alert.OK);}
+				
+				
+			
+				////////////////////////////////////////////////////////////
+				listaSexo.addItem("Masculino");
+				listaSexo.addItem("Femenino");
+				
+				//listaPrevision.addAll(bd1.getIsapres());
+			}
+		//////////////////////////////////////////
+			public function main():void
+			{
+				this.contenedorTab.visible=false;
+				this.listaPacientes.visible=false;
+				this.contenedorTab.y=-700;
+			
+				_var.listaPacientes 		= listaPacientes;
+				_var.campoRut				= campoRut;
+				_var.campoNombres   		= campoNombres;
+				_var.campoApellidoPaterno   = campoApellidoPaterno;
+				_var.campoApellidoMaterno   = campoApellidoMaterno;
+				_var.campoFechaNacimiento   = campoFechaNacimiento;
+				_var.campoSexo				= campoSexo;
+				_var.campoDv= campoDv;
+				_var.campoPrevision      	= campoPrevision;
+				
+
+				_var.labelId						= labelId;
+				bd1               = new Bd();
+				
+			}
+			
+	///////////////////////////////////////// CONTROL DE CAMPOS
+			private function seleccionarPaciente():void
+			{
+				this.contenedorTab.visible=true;
+				
+				this.labelId.text			= listaPacientes.selectedItem.id;
+				this.campoRut.text         = listaPacientes.selectedItem.rut;
+				this.campoNombres.text         = listaPacientes.selectedItem.nombres;
+				this.campoApellidoPaterno.text      = listaPacientes.selectedItem.apellidoPaterno;
+				this.campoApellidoMaterno.text         = listaPacientes.selectedItem.apellidoMaterno;
+				this.campoFechaNacimiento.text         = listaPacientes.selectedItem.fechaNacimiento;
+				this.campoSexo.textInput.text         = listaPacientes.selectedItem.sexo;
+				this.campoPrevision.textInput.text         = listaPacientes.selectedItem.prevision;
+				
+				if (listaPacientes.selectedItem.sexo == "Masculino")campoSexo.selectedIndex = 0;
+				if (listaPacientes.selectedItem.sexo == "Femenino")campoSexo.selectedIndex = 1;
+				
+			/* 	if (listaPacientes.selectedItem.prevision == "Banmedica")campoSexo.selectedIndex = 0;
+				if (listaPacientes.selectedItem.prevision == "Colmena")campoSexo.selectedIndex = 1;
+				if (listaPacientes.selectedItem.prevision == "Consalud")campoSexo.selectedIndex = 2;
+				if (listaPacientes.selectedItem.prevision == "Cruz Blanca")campoSexo.selectedIndex = 3;
+				if (listaPacientes.selectedItem.prevision == "Ferrosalud")campoSexo.selectedIndex = 4;
+				if (listaPacientes.selectedItem.prevision == "Masvida")campoSexo.selectedIndex = 5;
+				if (listaPacientes.selectedItem.prevision == "Vida Tres")campoSexo.selectedIndex = 6;
+				if (listaPacientes.selectedItem.prevision == "Particular")campoSexo.selectedIndex = 7;
+				if (listaPacientes.selectedItem.prevision == "Fonasa")campoSexo.selectedIndex = 8; */
+
+				
+				
+			}
+			
+			
+			private function seleccionarPaciente_():void
+			{
+				this.contenedorTab.visible=true;
+				_var.id			= listaPacientes.selectedItem.id;
+				_var.rut         = listaPacientes.selectedItem.rut;
+				_var.nombres         = listaPacientes.selectedItem.nombres;
+				_var.apellidoPaterno      = listaPacientes.selectedItem.apellidoPaterno;
+				_var.apellidoMaterno         = listaPacientes.selectedItem.apellidoMaterno;
+				_var.fechaNacimiento         = listaPacientes.selectedItem.fechaNacimiento;
+				_var.sexo         = listaPacientes.selectedItem.sexo;
+				_var.prevision         = listaPacientes.selectedItem.prevision;
+				
+				
+				
+			}
+			
+			
+			
+			
+			
+	///////////////////////////////////////////////////////////
+	
+			private function openConnection():void{
+				var password:String = passwordInput.text;
+				var mensaje:String =bd1.validaPassword(password);
+				if(mensaje!=""){
+					statusMsg.text=mensaje;
+					return;
+				}
+				passwordInput.text = "";
+				bd1.openConnection2(password);
+				_var.conn.addEventListener(SQLEvent.OPEN, openHandler);
+			}
+			
+			private function openHandler(event:SQLEvent):void
+			{
+				this.passwordInput.visible=false;
+				this.openButton.visible=false;
+				this.statusMsg.visible=false;
+		
+				this.contenedorTab.visible=true;
+	
+				this.bajarTabH.play();
+				this.listaPacientes.visible=true;
+				
+					//service.send("SELECT * FROM pacientes WHERE pacientes.n = medicos_pacientes.n_pacientes AND medicos_pacientes.n_medicos = medicos.n AND medicos.clave ="" LIMIT 10");
+				
+					//service.send("SELECT * FROM pacientes WHERE pacientes.n = medicos_pacientes.n_pacientes AND medicos_pacientes.n_medicos = medicos.n AND medicos.clave ="+passwordInput.text+" LIMIT 10");
+			}
+			
+	/////////////////// BASE DE DATOS REMOTA
+			
+			
+		
+	/////////////////////////////////////////
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+	
+				
+			}
+			
+			
+			/////////////////////////// Manejadores de botones
+			
+			function btnBuscar_clickHandler(e:Event):void{
+				this.contenedorTab.visible=false;
+			}
+			
+			function btnAgregar_clickHandler(e:Event):void{
+				bd1.agregaPersona(this.campoRut.text,this.campoDv.text,this.campoNombres.text, this.campoApellidoPaterno.text, this.campoApellidoMaterno.text, this.campoFechaNacimiento.text, this.campoDireccionCalle.text);
+				bd1.agregaPaciente(this.campoRut.text, this.campoNombres.text, this.campoApellidoPaterno.text, this.campoApellidoMaterno.text, this.campoFechaNacimiento.text,
+									this.campoSexo.selectedItem, this.campoPrevision.selectedItem);
+			}
+			
+			function btnBorrar_clickHandler(e:Event):void{
+				bd1.borraPaciente(this.labelId.text);
+			}
+			
+			function btnActualizar_clickHandler(e:Event):void{
+				bd1.actualizaPaciente(this.labelId.text, this.campoRut.text, this.campoNombres.text, this.campoApellidoPaterno.text, this.campoApellidoMaterno.text,
+									this.campoFechaNacimiento.text, this.campoSexo.selectedItem, this.campoPrevision.selectedItem);
+			}
+			
+			
+			/////////////////////////////////////////////////////
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<mx:Glow id="glowImage" duration="500"
+				 alphaFrom="1.0" alphaTo="0.3"
+				 blurXFrom="0.0" blurXTo="20.0"
+				 blurYFrom="0.0" blurYTo="20.0"
+				 color="0xFFFFFF"/>
+		<mx:Glow id="unglowImage" duration="500"
+				 alphaFrom="0.3" alphaTo="1.0"
+				 blurXFrom="20.0" blurXTo="0.0"
+				 blurYFrom="20.0" blurYTo="0.0"
+				 color="0x0000FF"/>
+		<mx:Fade id="fadeOut" duration="200" alphaFrom="1.0" alphaTo="0.0"/>
+		<mx:Fade id="fadeIn" duration="200" alphaFrom="0.0" alphaTo="1.0"/>
+		<mx:Resize id="expandirTab" target="{contenedorTab}" widthTo="1000"/>
+		<mx:Resize id="expandirTabH" target="{contenedorTab}" heightTo="600"/>
+		<mx:Resize id="contraerTab" target="{contenedorTab}" widthTo="1"/>
+	
+		<mx:Move id="bajarTabH" target="{contenedorTab}" yTo="0"/>
+		<mx:Move id="myMove" target="{contenedorTab}" xTo="999"/>
+		<mx:Move id="myMove2" target="{contenedorTab}" xTo="0"/>
+		
+		<mx:Blur id="blurImage" target="{contenedorTab}" duration="500" 
+				 blurXFrom="0.0" blurXTo="3.0" 
+				 blurYFrom="0.0" blurYTo="3.0"/>
+		<mx:Blur id="unblurImage" target="{contenedorTab}" duration="500" 
+				 blurXFrom="3.0" blurXTo="0.0" 
+				 blurYFrom="3.0" blurYTo="0.0"/>
+		
+	
+		
+		
+	</fx:Declarations>
+	
+	<s:BorderContainer width="100%" height="100%"
+					   backgroundImage="@Embed('imagenes/bg2.jpg')"
+					   backgroundImageFillMode="repeat" >
+	</s:BorderContainer>			
+	
+	<mx:DataGrid width="1000" height="690" id="listaPacientes" left="1" top="1" dataProvider="{_var.datosDB}" click="{seleccionarPaciente()}">
+		<mx:columns>
+			<mx:DataGridColumn dataField="id" headerText="ID"/>
+			<mx:DataGridColumn dataField="rut" headerText="RUT"/>
+			<mx:DataGridColumn dataField="nombres" headerText="Nombre"/>
+			<mx:DataGridColumn dataField="apellidoPaterno" headerText="A.Paterno"/>
+			<mx:DataGridColumn dataField="apellidoMaterno" headerText="A.Materno"/>
+			<mx:DataGridColumn dataField="fechaNacimiento" headerText="Fecha Nac."/>
+			<mx:DataGridColumn dataField="sexo" headerText="Sexo"/>
+			<mx:DataGridColumn dataField="prevision" headerText="Previsión"/>
+		</mx:columns>
+	</mx:DataGrid>
+	<mx:TabNavigator id="contenedorTab" visible="true" x="0" y="0" width="1000" height="700"
+					  fontFamily="Verdana" fontSize="10">
+		<s:NavigatorContent id="pacientes" width="100%" height="100%" label="PACIENTES"  fontFamily="Verdana" fontSize="10" visible="{pacientes.focusEnabled}" hideEffect="{fadeOut}" showEffect="{fadeIn}">
+			
+			<!--s:Button id="btnSend" x="792" y="14" width="179" height="22" label="Mostrar todos" click="{btnBuscar_clickHandler(event),  contraerTab.play(), myMove.play()}"/-->
+			<s:Button id="btnSend" x="792" y="14" width="179" height="22" label="Mostrar todos" click="{btnBuscar_clickHandler(event)}"/>
+			
+			<s:Label id="labelId" x="26" y="22" text="{_var.id}" />
+			<s:Label x="26" y="22" text="RUT"/>
+			<mx:TextInput id="campoRut" x="23" y="36" width="214" text="{_var.rut}"/>
+			<s:Label x="245" y="22" text="DV"/>
+			<mx:TextInput id="campoDv" x="245" y="36" width="20" text="{_var.dv}"/>
+			<s:Label x="306" y="22" text="Nombres"/>
+			<mx:TextInput id="campoNombres" x="306" y="36" width="214" text="{_var.nombres}"/>
+			
+			<s:Label x="306" y="67" text="Fecha de Nacimiento"/>
+			<mx:DateField x="307" y="84" id="campoFechaNacimiento" width="135" text="{_var.fechaNacimiento}"/>
+						
+			<s:Label x="548" y="22" text="Apellido Paterno"/>
+			<mx:TextInput id="campoApellidoPaterno" x="548" y="36" width="214" text="{_var.apellidoPaterno}"/>
+			
+			<s:Label x="23" y="66" text="Apellido Materno"/>
+			<mx:TextInput id="campoApellidoMaterno" x="23" y="84" width="214" text="{_var.apellidoMaterno}"/>
+			
+			<s:Label x="26" y="116" text="Sexo"/>
+			<s:ComboBox id="campoSexo" x="23" y="136" width="214" dataProvider="{listaSexo}"/>
+			
+			<s:Label x="277" y="118" text="Previsión"/>
+			<s:ComboBox x="277" y="136" id="campoPrevision" width="214" dataProvider="{listaSexo}"/>
+			<s:Button id="agregar" x="791" y="52" width="179" height="25" label="Agregar como nuevo" click="{btnAgregar_clickHandler(event)}"/>
+			<s:Button id="borrar" x="791" y="158" width="179" height="23" label="Borrar" click="{btnBorrar_clickHandler(event)}"/>
+			<s:Button x="791" y="94" width="179" label="Guardar cambios"  click="{btnActualizar_clickHandler(event)}"/>
+			<s:Label x="548" y="70" text="Calle"/>
+			<mx:TextInput id="campoDireccionCalle" x="548" y="84" width="214" text="{_var.apellidoPaterno}"/>
+			<s:Label x="26" y="171" text="Número"/>
+			<s:ComboBox id="campoDireccionNumero" x="23" y="191" width="214" dataProvider="{listaSexo}"/>
+			<s:Label x="285" y="172" text="detalle"/>
+			<s:ComboBox id="campoDireccionDetalle" x="282" y="192" width="214" dataProvider="{listaSexo}"/>
+			<s:Label x="557" y="118" text="mail"/>
+			<s:ComboBox id="campoMail" x="554" y="138" width="214" dataProvider="{listaSexo}"/>
+			<s:Label x="25" y="230" text="Telefono"/>
+			<s:ComboBox id="campoTelefono" x="22" y="250" width="214" dataProvider="{listaSexo}"/>
+			
+		
+			
+			
+		</s:NavigatorContent>
+	
+			
+		<s:NavigatorContent id="conexion" width="100%" height="100%" label="CONEXION"  color="#0B333C" fontFamily="Verdana" fontSize="10"  visible="{conexion.focusEnabled}"
+								hideEffect="{fadeOut}" showEffect="{fadeIn}">
+				<s:TextArea id="logField" x="423" y="54" width="290" height="258" editable="false"
+							fontSize="12"/>
+				<s:Label x="423" y="36" text="Mensajes del sistema"/>
+
+				<s:Label id="popo" x="30" y="78" text="Conectado a internet"/>
+			</s:NavigatorContent>
+		</mx:TabNavigator>
+	
+
+	<mx:Text id="statusMsg" x="1" y="359" width="1000" height="43" color="#990000" textAlign="center"/>
+	<mx:Button id="openButton" x="420" y="314" width="160" label="Ingresar" click="openConnection();"/>
+	<mx:TextInput id="passwordInput" x="420" y="284" />
+	
+	<!--/////////////////////////////////////////////////////-->
+	<!--/////////////////////////////////////////////////////-->
+	
+
+</s:WindowedApplication>
